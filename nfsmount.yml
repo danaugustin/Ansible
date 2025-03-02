@@ -1,0 +1,22 @@
+- name: NFS Mount
+  hosts: k8s
+  become: true
+  tasks:
+    - name: Install dependencies
+      apt:
+        name: nfs-common
+        state: present
+        update_cache: yes
+
+    - name: Create Mount Directory
+      file:
+        path: /mnt/labdata
+        state: directory
+
+    - name: Mount Share
+      mount:
+        src: "10.1.1.104:/labdata"
+        path: "/mnt/labdata"
+        fstype: nfs
+        opts: defaults
+        state: present

@@ -1,0 +1,188 @@
+- name: Kubernetes Homelab Setup
+  hosts: k8s
+  become: true
+  tasks:
+    - name: Install NTP # Rolling back a snapshot in vcenter can cause apt issues when clocks are off
+      apt: 
+        name: ntpdate
+        state: present
+
+    - name: Sync Time 
+      command: ntpdate time.google.com
+      become: true
+
+    - name: Update APT package index
+      apt:
+        update_cache: yes
+
+    - name: Install Base Packages
+      package: name={{ item }} state=present force=yes install_recommends=no
+      loop: "{{ base_packages }}"
+
+    - name: Get Kubernetes package key
+      shell: curl -fsSL {{ k8s_url_apt_key }} | gpg --dearmor -o {{ k8s_gpgpath }}
+      args:
+        creates: "{{ k8s_gpgpath }}"
+
+    - name: Install Kubernetes repository
+      apt_repository:
+        filename: kubernetes
+        repo: "deb [signed-by={{ k8s_gpgpath }}] {{ k8s_repository }} /"
+
+    - name: Install Kubernetes Packages
+      package: name={{ item }} state=present force=yes install_recommends=no
+      loop: "{{ k8s_packages }}"
+
+    - name: Hold Kubernetes packages at current version
+      dpkg_selections:
+        name: "{{ item }}"
+        selection: hold
+      loop: "{{ k8s_packages }}"
+
+    - name: Create containerd directory
+      file:
+        path: /etc/containerd
+        state: directory
+
+    - name: Generate containerd config file
+      become: true
+      shell: |
+        containerd config default | tee /etc/containerd/config.toml
+        sed -i 's/SystemdCgroup = false/SystemdCgroup = true/g' /etc/containerd/config.toml
+
+    - name: Update sandbox_image version
+      become: yes
+      replace:
+        path: /etc/containerd/config.toml
+        regexp: 'sandbox_image\s*=\s*"registry.k8s.io/pause:\d+\.\d+"'
+        replace: 'sandbox_image = "registry.k8s.io/pause:3.10"'
+
+    - name: Enable and start containerd
+      systemd:
+        name: containerd
+        enabled: yes
+        state: started
+
+    - name: Restart containerd
+      systemd:
+        name: containerd
+        enabled: yes
+        state: restarted
+
+    - name: Enable kubelet service
+      systemd:
+        name: kubelet
+        enabled: yes
+
+    - name: Disable swap for current session
+      command: swapoff -a
+      become: true
+
+    - name: Disable swap permanently, persist reboots
+      replace:
+        path: /etc/fstab
+        regexp: '^(\s*)([^#\n]+\s+)(\w+\s+)swap(\s+.*)$'
+        replace: '#\1\2\3swap\4'
+        backup: yes
+
+    - name: Add br_netfilter to sysctl.conf
+      shell: |
+        echo "net.bridge.bridge-nf-call-iptables = 1" | sudo tee -a /etc/sysctl.conf
+        echo "net.bridge.bridge-nf-call-ip6tables = 1" | sudo tee -a /etc/sysctl.conf
+      become: true
+
+    - name: Load br_netfilter kernel module
+      ansible.builtin.modprobe:
+        name: br_netfilter
+        state: present
+
+    - ansible.posix.sysctl:
+        name: net.ipv4.ip_forward
+        value: '1'
+        sysctl_set: true
+        state: present
+        reload: true
+      
+    - name: Reload sysctl settings
+      command: sysctl -p /etc/sysctl.conf
+
+- name: Kubernetes Controlplane Setup
+  hosts: k8s_controlplane
+  become: true
+    
+  tasks:
+    - name: Initialize Kubernetes control plane
+      command: >
+        kubeadm init 
+        --apiserver-advertise-address={{ cluster_endpoint }} 
+        --pod-network-cidr={{ pod_network_cidr }} 
+        --upload-certs
+
+    - name: Wait for Controlplane to initialize [30s] 
+      ansible.builtin.wait_for:
+        timeout: 30
+
+    - name: Add KUBECONFIG to .bashrc
+      lineinfile:
+        path: ~/.bashrc
+        line: 'export KUBECONFIG=/etc/kubernetes/admin.conf'
+        create: yes
+
+    - name: Reload bashrc
+      shell: source ~/.bashrc
+      args:
+        executable: /bin/bash
+   
+    - name: Download Flannel CNI plugin manifest
+      get_url:
+        url: "https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml"
+        dest: /tmp/kube-flannel.yml     
+
+    - name: Apply Flannel CNI
+      command: kubectl apply -f /tmp/kube-flannel.yml
+      environment: "{{ env_vars }}"          
+
+    - name: Wait for Flannel to initialize [30s]
+      wait_for:
+        timeout: 30
+
+    - name: Extract join command for control plane
+      shell: kubeadm token create imshmn.pmdyiq127q1uel2t --print-join-command
+      register: control_plane_join_command
+
+    - name: Store the control plane join output as a fact
+      set_fact:
+        join_command: "{{ control_plane_join_command.stdout }}"
+      delegate_to: localhost
+
+- name: Kubernetes Workers Setup
+  hosts: k8s_workers
+  become: true
+
+  tasks:
+    - name: Join additional control plane nodes
+      shell: "{{ hostvars[groups['k8s_controlplane'][0]]['join_command'] }}"
+      register: join_output
+      changed_when: "'already joined' not in join_output.stdout"
+      become: true
+
+- name: Kubernetes Final Setup
+  hosts: k8s
+  become: true
+
+  tasks:
+   # - name: Remove control plane taint (Allow workloads on control nodes)
+   #   command: kubectl taint nodes {{ inventory_hostname }} node-role.kubernetes.io/master:NoSchedule-
+   #   environment: "{{ env_vars }}"
+   #   ignore_errors: yes
+
+    - name: Add KUBECONFIG to .bashrc
+      lineinfile:
+        path: ~/.bashrc
+        line: 'export KUBECONFIG=/etc/kubernetes/admin.conf'
+        create: yes
+
+    - name: Reload bashrc
+      shell: source ~/.bashrc
+      args:
+        executable: /bin/bash

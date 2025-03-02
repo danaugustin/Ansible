@@ -1,0 +1,52 @@
+- name: Update Ubuntu, change hostname, and update IP address
+  hosts: template
+  become: yes
+  vars_files:
+    - lab.yml
+  vars:
+    new_hostname: "k8s-3"
+    new_ip: "10.1.1.13"
+    new_netmask: "24"
+    new_gateway: "10.1.1.1"
+    new_dns1: "10.1.1.1"
+    new_dns2: "8.8.8.8"
+
+  tasks:
+    - name: Update and upgrade apt packages
+      apt:
+        update_cache: yes
+        upgrade: dist
+
+    - name: Change hostname
+      hostname:
+        name: "{{ new_hostname }}"
+
+    - name: Update /etc/hosts with new hostname
+      lineinfile:
+        path: /etc/hosts
+        regexp: '127\.0\.1\.1\s+.*'
+        line: "127.0.1.1 {{ new_hostname }}"
+        state: present
+
+    - name: Set static IP in netplan configuration
+      copy:
+        dest: /etc/netplan/50-cloud-init.yaml
+        content: |
+          network:
+            version: 2
+            ethernets:
+              ens160:
+                addresses:
+                  - {{ new_ip }}/{{ new_netmask }}
+                nameservers:
+                  addresses:
+                  - {{ new_dns1 }}
+                  - {{ new_dns2 }}
+                routes:
+                - to: default
+                  via: {{ new_gateway }}
+      notify: Apply new netplan configuration
+
+  handlers:
+    - name: Apply new netplan configuration
+      command: netplan apply

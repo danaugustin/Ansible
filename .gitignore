@@ -1,0 +1,5 @@
+#Ignore Vault
+group_vars/all.yml
+
+#Other files / folders
+.DS_Store

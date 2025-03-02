@@ -1,0 +1,164 @@
+- name: Install iptables and configure NAT
+  hosts: nat_machines
+  become: yes
+  tasks:
+
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Install iptables
+      apt:
+        name: iptables
+        state: present
+
+    - name: Install net-tools
+      apt:
+        name: net-tools
+        state: present
+
+    - name: Enable IP forwarding
+      sysctl:
+        name: net.ipv4.ip_forward
+        value: '1'
+        state: present
+        sysctl_set: yes
+        reload: yes
+
+    - name: Flush all NAT rules
+      iptables:
+        table: nat
+        chain: '*'
+        flush: yes
+
+    - name: SNAT nat-1
+      iptables:
+        table: nat
+        chain: POSTROUTING
+        jump: SNAT
+        out_interface: eth0
+        source: 10.61.0.31
+        to_source: 10.194.98.57
+        state: present
+
+    - name: SNAT nat-1
+      iptables:
+        table: nat
+        chain: POSTROUTING
+        jump: SNAT
+        out_interface: eth0
+        destination: 10.61.0.31
+        to_source: 10.194.98.57
+        state: present
+
+    - name: SNAT nat-2
+      iptables:
+        table: nat
+        chain: POSTROUTING
+        jump: SNAT
+        out_interface: eth0
+        source: 10.61.38.220
+        to_source: 10.194.98.58
+        state: present
+
+    - name: SNAT nat-2
+      iptables:
+        table: nat
+        chain: POSTROUTING
+        jump: SNAT
+        out_interface: eth0
+        destination: 10.61.38.220
+        to_source: 10.194.98.58
+        state: present
+
+    - name: SNAT nat-3
+      iptables:
+        table: nat
+        chain: POSTROUTING
+        jump: SNAT
+        out_interface: eth0
+        source: 10.61.41.221
+        to_source: 10.194.78.253
+        state: present
+
+    - name: SNAT nat-3
+      iptables:
+        table: nat
+        chain: POSTROUTING
+        jump: SNAT
+        out_interface: eth0
+        destination: 10.61.41.221
+        to_source: 10.194.78.253
+        state: present
+
+    - name: DNAT nat-1
+      iptables:
+        table: nat
+        chain: PREROUTING
+        jump: DNAT
+        in_interface: eth0
+        protocol: tcp
+        destination_port: 2404
+        destination: 10.194.98.57
+        to_destination: 10.61.0.31
+        state: present
+
+    - name: DNAT nat-1
+      iptables:
+        table: nat
+        chain: PREROUTING
+        jump: DNAT
+        in_interface: eth0
+        protocol: icmp
+        destination: 10.194.98.57
+        to_destination: 10.61.0.31
+        state: present
+
+    - name: DNAT nat-2
+      iptables:
+        table: nat
+        chain: PREROUTING
+        jump: DNAT
+        in_interface: eth0
+        protocol: tcp
+        destination_port: 2404
+        destination: 10.194.98.58
+        to_destination: 10.61.38.220
+        state: present
+
+    - name: DNAT nat-2
+      iptables:
+        table: nat
+        chain: PREROUTING
+        jump: DNAT
+        in_interface: eth0
+        protocol: icmp
+        destination: 10.194.98.58
+        to_destination: 10.61.38.220
+        state: present
+
+    - name: DNAT nat-3
+      iptables:
+        table: nat
+        chain: PREROUTING
+        jump: DNAT
+        in_interface: eth0
+        protocol: tcp
+        destination_port: 2404
+        destination: 10.194.78.253
+        to_destination: 10.61.41.221
+        state: present
+
+    - name: DNAT nat-3
+      iptables:
+        table: nat
+        chain: PREROUTING
+        jump: DNAT
+        in_interface: eth0
+        protocol: icmp
+        destination: 10.194.78.253
+        to_destination: 10.61.41.221
+        state: present
+
+    - name: Save iptables rules
+      command: iptables-save

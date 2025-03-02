@@ -1,0 +1,20 @@
+- name: Graylog config
+  hosts: all
+  become: yes 
+  vars_files:
+    - vault.yml
+  tasks:
+    - name: Copy configuration file to the server
+      copy:
+        src: ../files/60-graylog.conf
+        dest: /etc/rsyslog.d/60-graylog.conf
+        owner: root
+        group: root
+        mode: '0644'
+      notify: Restart rsyslog
+
+  handlers:
+    - name: Restart rsyslog
+      service:
+        name: rsyslog
+        state: restarted

@@ -1,0 +1,33 @@
+- name: Deploy and install SDG
+  hosts: sdg
+  become: yes
+  vars_files:
+    - vault.yml
+  tasks:
+    - name: Copy tar file to VM
+      copy:
+        src: /Users/daugustin/Downloads/Ubuntu20-SDG5.02.tar
+        dest: /tmp/Ubuntu20-SDG5.02.tar
+        mode: '0644'
+
+    - name: Unpack the tar file
+      unarchive:
+        src: /tmp/Ubuntu20-SDG5.02.tar
+        dest: /tmp
+        remote_src: yes
+
+    - name: Run install script
+      expect:
+        command: ./install_script.sh
+        responses:
+            "Enter password:":
+                - "{{ sdg_password }}"
+            "Verify password:":
+                - "{{ sdg_password }}"
+            "set Host":
+                - "1"
+            "Select IP":
+                - "1"
+
+      args:
+        chdir: /tmp

@@ -1,0 +1,21 @@
+kubernetes_version: "1.32.0-00"
+pod_network_cidr: "10.244.0.0/16"
+cluster_endpoint: "10.1.1.11"
+k8s_url_apt_key: "https://pkgs.k8s.io/core:/stable:/v1.32/deb/Release.key"
+k8s_gpgpath: /usr/share/keyrings/kubernetes-apt-keyring.gpg
+k8s_repository: "https://pkgs.k8s.io/core:/stable:/v1.32/deb/"
+k8s_packages:
+  - kubeadm
+  - kubelet
+  - kubectl
+  - containerd
+base_packages:
+  - apt-transport-https
+  - ca-certificates
+  - curl
+  - software-properties-common
+  - gnupg
+  - vim
+  - netcat-traditional
+env_vars:
+    KUBECONFIG: /etc/kubernetes/admin.conf     

@@ -1,0 +1,42 @@
+all:
+  hosts:
+    test-machine:
+      ansible_host: 10.1.1.31
+      ansible_user: ubuntu
+      ansible_ssh_private_key_file: ~/.ssh/test-machine.pem
+    ubuntu-template:
+      ansible_host: 10.1.1.254
+      ansible_user: "{{ template_user }}"
+      ansible_password: "{{ template_password }}"
+    k8s-1:
+      ansible_host: 10.1.1.11
+      ansible_user: "{{ template_user }}"
+      ansible_password: "{{ template_password }}"    
+    k8s-2:
+      ansible_host: 10.1.1.12
+      ansible_user: "{{ template_user }}"
+      ansible_password: "{{ template_password }}"   
+    k8s-3:
+      ansible_host: 10.1.1.13
+      ansible_user: "{{ template_user }}"
+      ansible_password: "{{ template_password }}"  
+
+  children:
+    template:
+      hosts:
+        ubuntu-template:
+    k8s:
+      hosts:
+        k8s-1:
+        k8s-2:
+        k8s-3:
+    
+    k8s_controlplane:
+      hosts:
+        k8s-1:
+
+    k8s_workers:
+      hosts:
+        k8s-2:
+        k8s-3:
+        
