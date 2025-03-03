@@ -1,1 +1,11 @@
-This repo is a collection of Ansible playbooks both for my homelab environment and those that I have created for other purposes that are worth hanging on to.
+```                                                                                            
+                              :::     ::::    :::  ::::::::  ::::::::::: :::::::::  :::        :::::::::: 
+                            :+: :+:   :+:+:   :+: :+:    :+:     :+:     :+:    :+: :+:        :+:        
+                           +:+   +:+  :+:+:+  +:+ +:+            +:+     +:+    +:+ +:+        +:+        
+                          +#++:++#++: +#+ +:+ +#+ +#++:++#++     +#+     +#++:++#+  +#+        +#++:++#   
+                          +#+     +#+ +#+  +#+#+#        +#+     +#+     +#+    +#+ +#+        +#+        
+                          #+#     #+# #+#   #+#+# #+#    #+#     #+#     #+#    #+# #+#        #+#        
+                          ###     ### ###    ####  ########  ########### #########  ########## ########## 
+```
+
+This is a collection of Ansible files used in my homelab and for other various projects.
