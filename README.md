@@ -8,4 +8,4 @@
             ###     ### ###    ####  ########  ########### #########  ########## ########## 
 ```
 
-This is a collection of Ansible files used in my homelab and for other various projects.
+This is a collection of Ansible playbooks used in my homelab and for other various projects.
