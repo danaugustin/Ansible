@@ -9,7 +9,6 @@
 
     - name: Sync Time 
       command: ntpdate time.google.com
-      become: true
 
     - name: Update APT package index
       apt:
@@ -45,13 +44,11 @@
         state: directory
 
     - name: Generate containerd config file
-      become: true
       shell: |
         containerd config default | tee /etc/containerd/config.toml
         sed -i 's/SystemdCgroup = false/SystemdCgroup = true/g' /etc/containerd/config.toml
 
     - name: Update sandbox_image version
-      become: yes
       replace:
         path: /etc/containerd/config.toml
         regexp: 'sandbox_image\s*=\s*"registry.k8s.io/pause:\d+\.\d+"'
@@ -76,7 +73,6 @@
 
     - name: Disable swap for current session
       command: swapoff -a
-      become: true
 
     - name: Disable swap permanently, persist reboots
       replace:
@@ -89,7 +85,9 @@
       shell: |
         echo "net.bridge.bridge-nf-call-iptables = 1" | sudo tee -a /etc/sysctl.conf
         echo "net.bridge.bridge-nf-call-ip6tables = 1" | sudo tee -a /etc/sysctl.conf
-      become: true
+
+    - name: Add br_netfilter to modules-load
+      shell: echo br_netfilter | sudo tee /etc/modules-load.d/kubernetes.conf
 
     - name: Load br_netfilter kernel module
       ansible.builtin.modprobe:
@@ -164,7 +162,6 @@
       shell: "{{ hostvars[groups['k8s_controlplane'][0]]['join_command'] }}"
       register: join_output
       changed_when: "'already joined' not in join_output.stdout"
-      become: true
 
 - name: Kubernetes Final Setup
   hosts: k8s
