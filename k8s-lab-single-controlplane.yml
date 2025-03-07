@@ -1,6 +1,7 @@
 - name: Kubernetes Homelab Setup
   hosts: k8s
   become: true
+  environment: "{{ env_vars }}"  
   tasks:
     - name: Install NTP # Rolling back a snapshot in vcenter can cause apt issues when clocks are off
       apt: 
@@ -86,13 +87,18 @@
         echo "net.bridge.bridge-nf-call-iptables = 1" | sudo tee -a /etc/sysctl.conf
         echo "net.bridge.bridge-nf-call-ip6tables = 1" | sudo tee -a /etc/sysctl.conf
 
-    - name: Add br_netfilter to modules-load
-      shell: echo br_netfilter | sudo tee /etc/modules-load.d/kubernetes.conf
+    - name: Add modules to modules-load
+      shell: |
+        echo br_netfilter | sudo tee -a /etc/modules-load.d/kubernetes.conf
+        echo iscsi_tcp | sudo tee -a /etc/modules-load.d/kubernetes.conf
 
-    - name: Load br_netfilter kernel module
+    - name: Load kernel modules
       ansible.builtin.modprobe:
-        name: br_netfilter
+        name: "{{ item }}"
         state: present
+      loop:
+        - br_netfilter
+        - iscsi_tcp
 
     - ansible.posix.sysctl:
         name: net.ipv4.ip_forward
@@ -106,6 +112,7 @@
 
 - name: Kubernetes Controlplane Setup
   hosts: k8s_controlplane
+  environment: "{{ env_vars }}"  
   become: true
     
   tasks:
@@ -137,12 +144,14 @@
         dest: /tmp/kube-flannel.yml     
 
     - name: Apply Flannel CNI
-      command: kubectl apply -f /tmp/kube-flannel.yml
-      environment: "{{ env_vars }}"          
+      command: kubectl apply -f /tmp/kube-flannel.yml         
 
     - name: Wait for Flannel to initialize [30s]
       wait_for:
         timeout: 30
+
+    - name: Apply Longhorn
+      command: kubectl apply -f https://raw.githubusercontent.com/longhorn/longhorn/v1.8.0/deploy/longhorn.yaml
 
     - name: Extract join command for control plane
       shell: kubeadm token create imshmn.pmdyiq127q1uel2t --print-join-command
@@ -162,16 +171,6 @@
       shell: "{{ hostvars[groups['k8s_controlplane'][0]]['join_command'] }}"
       register: join_output
       changed_when: "'already joined' not in join_output.stdout"
-
-- name: Kubernetes Final Setup
-  hosts: k8s
-  become: true
-
-  tasks:
-   # - name: Remove control plane taint (Allow workloads on control nodes)
-   #   command: kubectl taint nodes {{ inventory_hostname }} node-role.kubernetes.io/master:NoSchedule-
-   #   environment: "{{ env_vars }}"
-   #   ignore_errors: yes
 
     - name: Add KUBECONFIG to .bashrc
       lineinfile:
