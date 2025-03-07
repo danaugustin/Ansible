@@ -11,11 +11,8 @@ k8s_packages:
   - containerd
 base_packages:
   - apt-transport-https
-  - ca-certificates
-  - curl
-  - software-properties-common
-  - gnupg
   - vim
   - netcat-traditional
+  - nfs-common
 env_vars:
     KUBECONFIG: /etc/kubernetes/admin.conf     
