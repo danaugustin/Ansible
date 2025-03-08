@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ ingress_name }}
+  namespace: {{ ingress_namespace | default('default') }}
+  {% if ingress_annotations %}
+  annotations:
+    {% for key, value in ingress_annotations.items() %}
+    {{ key }}: "{{ value }}"
+    {% endfor %}
+  {% endif %}
+spec:
+  ingressClassName: {{ ingress_class }}
+  rules:
+  - http:
+      paths:
+        {% for item in ingress_paths %}
+        - path: {{ item.path }}
+          pathType: {{ item.pathType }}
+          backend:
+            service:
+            name: {{ item.backend_service }}
+            port:
+                number: {{ item.backend_port }}
+        {% endfor %}
