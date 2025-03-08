@@ -153,6 +153,14 @@
     - name: Apply Longhorn
       command: kubectl apply -f https://raw.githubusercontent.com/longhorn/longhorn/v1.8.0/deploy/longhorn.yaml
 
+    - name: Deploy Longhorn resources
+      vars_files:
+        - vars/lab.yml
+
+      roles:
+        - role: ingress
+        - role: secret
+
     - name: Extract join command for control plane
       shell: kubeadm token create imshmn.pmdyiq127q1uel2t --print-join-command
       register: control_plane_join_command

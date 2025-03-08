@@ -1,0 +1,4 @@
+- name: Create Ingress from Jinja template
+  k8s:
+    state: present
+    definition: "{{ lookup('template', 'ingress.yml.j2') }}"
