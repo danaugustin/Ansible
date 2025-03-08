@@ -159,7 +159,11 @@
 
       roles:
         - role: ingress
+          vars:
+            ingress: "{{ longhorn_ingress }}"
         - role: secret
+          vars:
+            secret: "{{ longhorn_secret }}"
 
     - name: Extract join command for control plane
       shell: kubeadm token create imshmn.pmdyiq127q1uel2t --print-join-command
