@@ -7,24 +7,20 @@ longhorn_ingress:
   ingress_paths:
     - path: "/"
       pathType: "Prefix"
-      backend_service: "my-app-service"
+      backend_service: "longhorn-frontend"
       backend_port: 80
-    - path: "/api"
-      pathType: "Prefix"
-      backend_service: "my-api-service"
-      backend_port: 8080
 
   ingress_annotations:
-    nginx.ingress.kubernetes.io/auth-type: basic
+    nginx.ingress.kubernetes.io/auth-type: "basic"
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-    nginx.ingress.kubernetes.io/ssl-redirect: 'false'
-    nginx.ingress.kubernetes.io/auth-secret: basic-auth
-    nginx.ingress.kubernetes.io/auth-realm: 'Authentication Required'
-    nginx.ingress.kubernetes.io/proxy-body-size: 10000m
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/auth-secret: "basic-auth"
+    nginx.ingress.kubernetes.io/auth-realm: "Authentication Required"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10000m"
 
 longhorn_secret:
   secret_name: longhorn-secret
   namespace: longhorn-system
   secret_type: Opaque
-  username: {{ lab_user }}
-  password: {{ lab_password }}
+  username: "{{ lab_user }}"
+  password: "{{ lab_password }}"

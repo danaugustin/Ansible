@@ -16,8 +16,18 @@
         update_cache: yes
 
     - name: Install Base Packages
-      package: name={{ item }} state=present force=yes install_recommends=no
+      package: 
+        name: "{{ item }}"
+        state: present
       loop: "{{ base_packages }}"
+
+    - name: Install PIP Packages
+      pip: 
+        name: "{{ item }}"
+        state: present
+        executable: /usr/bin/pip3
+        extra_args: "--break-system-packages"
+      loop: "{{ pip_packages }}"
 
     - name: Get Kubernetes package key
       shell: curl -fsSL {{ k8s_url_apt_key }} | gpg --dearmor -o {{ k8s_gpgpath }}
@@ -30,7 +40,9 @@
         repo: "deb [signed-by={{ k8s_gpgpath }}] {{ k8s_repository }} /"
 
     - name: Install Kubernetes Packages
-      package: name={{ item }} state=present force=yes install_recommends=no
+      package: 
+        name: "{{ item }}" 
+        state: present
       loop: "{{ k8s_packages }}"
 
     - name: Hold Kubernetes packages at current version
@@ -114,7 +126,9 @@
   hosts: k8s_controlplane
   environment: "{{ env_vars }}"  
   become: true
-    
+  vars_files:
+      - vars/lab.yml    
+          
   tasks:
     - name: Initialize Kubernetes control plane
       command: >
@@ -124,7 +138,7 @@
         --upload-certs
 
     - name: Wait for Controlplane to initialize [30s] 
-      ansible.builtin.wait_for:
+      wait_for:
         timeout: 30
 
     - name: Add KUBECONFIG to .bashrc
