@@ -1,0 +1,9 @@
+patches:
+  - target:
+      kind: Service
+      name: my-release-nginx-ingress-controller
+    patch: |
+      - op: replace
+        path: /spec/type
+        value: nodePort
+      

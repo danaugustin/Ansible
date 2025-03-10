@@ -20,6 +20,8 @@ all:
       ansible_host: 10.1.1.13
       ansible_user: "{{ lab_user }}"
       ansible_password: "{{ lab_password }}"  
+    localhost:
+      ansible_connection: local
 
   children:
     template:
@@ -39,4 +41,7 @@ all:
       hosts:
         k8s-2:
         k8s-3:
-        
+
+    local:
+      hosts:
+        localhost:
