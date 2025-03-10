@@ -1,0 +1,17 @@
+- name: Kubernetes Controlplane Setup
+  hosts: localhost
+  environment: "{{ env_vars }}"  
+  become: true
+  tasks:
+
+    - name: Install NGINX Ingress controller using Helm
+      community.kubernetes.helm:
+        name: my-release
+        chart_ref: "oci://ghcr.io/nginx/charts/nginx-ingress"
+        chart_version: "2.0.1"
+        release_namespace: "ingress-nginx"
+        create_namespace: true
+        state: present
+
+    - name: Apply Kustomize Manifests
+      command: kubectl apply -k kustomize/overlays/lab
