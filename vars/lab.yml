@@ -19,7 +19,7 @@ longhorn_ingress:
     nginx.ingress.kubernetes.io/proxy-body-size: "10000m"
 
 longhorn_secret:
-  secret_name: longhorn-secret
+  secret_name: basic-auth
   namespace: longhorn-system
   secret_type: Opaque
   username: "{{ lab_user }}"
