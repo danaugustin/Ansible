@@ -1,0 +1,16 @@
+- name: Hash the Longhorn password
+  set_fact:
+    hashed_password: "{{ secret.password | password_hash('sha512') }}"
+
+- name: Create Longhorn secret
+  k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: "{{ secret.secret_name }}"
+        namespace: "{{ secret.namespace }}"
+      type: "{{ secret.secret_type }}"
+      data:
+        auth: "{{ (secret.username ~ ':' ~ hashed_password) | b64encode }}"
