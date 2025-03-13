@@ -164,6 +164,14 @@
       wait_for:
         timeout: 30
 
+    - name: Download Metallb manifest
+      get_url:
+        url: "https://raw.githubusercontent.com/metallb/metallb/v0.14.9/config/manifests/metallb-native.yaml"
+        dest: /tmp/metallb.yml     
+
+    - name: Apply Metallb manifest
+      command: kubectl apply -f /tmp/metallb.yml  
+
     - name: Apply Longhorn
       command: kubectl apply -f https://raw.githubusercontent.com/longhorn/longhorn/v1.8.0/deploy/longhorn.yaml
 
