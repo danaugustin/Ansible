@@ -24,3 +24,21 @@ longhorn_secret:
   secret_type: Opaque
   username: "{{ lab_user }}"
   password: "{{ lab_password }}"
+
+metallb_address:
+  apiVersion: metallb.io/v1beta1
+  kind: L2Advertisement
+  name: metallb-advertise
+  namespace: metallb-system
+  spec:
+    ipAddressPools:
+    - metallb-pool
+
+metallb_advertise:
+  apiVersion: metallb.io/v1beta1
+  kind: IPAddressPool
+  name: metallb-pool
+  namespace: metallb-system
+  spec:
+    addresses:
+    - 10.1.1.160-10.1.1.250

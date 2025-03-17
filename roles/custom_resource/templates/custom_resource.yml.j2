@@ -1,0 +1,24 @@
+apiVersion: {{ resource.apiVersion }}
+kind: {{ resource.kind }}
+metadata:
+  name: {{ resource.name }}
+  namespace: {{ resource.namespace }}
+{% if resource.annotations | default({}) %}
+  annotations:
+{% for key, value in resource.annotations.items() %}
+    {{ key }}: "{{ value }}"
+{% endfor %}
+{% endif %}
+{% if resource.spec | default({}) %}
+spec:
+{% for key, value in resource.spec.items() %}
+  {{ key }}:
+{% if value is iterable and value is not string %}
+  {% for item in value %}
+  - {{ item }}
+  {% endfor %}
+{% else %}
+  {{ value }}
+{% endif %}
+{% endfor %}
+{% endif %}
