@@ -6,10 +6,14 @@
       - vars/lab.yml    
   tasks:
 
-    - name: Download Metallb manifest
-      get_url:
-        url: "https://raw.githubusercontent.com/metallb/metallb/v0.14.9/config/manifests/metallb-native.yaml"
-        dest: /tmp/metallb.yml     
+    - name: Create Metallb address pool
+      include_role:
+        name: custom_resource
+      vars:
+        resource: "{{ metallb_address }}"
 
-    - name: Apply Metallb manifest
-      command: kubectl apply -f /tmp/metallb.yml  
+    - name: Create Metallb advertisement
+      include_role:
+        name: custom_resource
+      vars:
+        resource: "{{ metallb_advertise }}"

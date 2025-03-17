@@ -164,6 +164,18 @@
       wait_for:
         timeout: 30
 
+    - name: Create Metallb address pool
+      include_role:
+        name: custom_resource
+      vars:
+        resource: "{{ metallb_address }}"
+
+    - name: Create Metallb advertisement
+      include_role:
+        name: custom_resource
+      vars:
+        resource: "{{ metallb_advertise }}"
+
     - name: Download Metallb manifest
       get_url:
         url: "https://raw.githubusercontent.com/metallb/metallb/v0.14.9/config/manifests/metallb-native.yaml"

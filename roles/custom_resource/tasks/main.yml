@@ -1,0 +1,4 @@
+- name: Create custom resource from Jinja template
+  k8s:
+    state: present
+    definition: "{{ lookup('template', 'custom_resource.yml.j2') }}"
