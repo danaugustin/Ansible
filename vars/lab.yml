@@ -1,22 +1,25 @@
 longhorn_ingress:
-  ingress_name: longhorn-ingress
-  ingress_namespace: longhorn-system
-  ingress_class: nginx
-  ingress_service: longhorn-frontend
-
-  ingress_paths:
-    - path: "/"
-      pathType: "Prefix"
-      backend_service: "longhorn-frontend"
-      backend_port: 80
-
-  ingress_annotations:
+  name: longhorn-ingress
+  namespace: longhorn-system
+  annotations:
     nginx.ingress.kubernetes.io/auth-type: "basic"
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
     nginx.ingress.kubernetes.io/ssl-redirect: "false"
     nginx.ingress.kubernetes.io/auth-secret: "basic-auth"
     nginx.ingress.kubernetes.io/auth-realm: "Authentication Required"
     nginx.ingress.kubernetes.io/proxy-body-size: "10000m"
+  spec: 
+    ingressClassName: nginx 
+    rules:
+      - http:
+          paths:
+            - path: "/" 
+              pathType: Prefix 
+              backend: 
+                service: 
+                  name: longhorn-frontend
+                  port: 
+                      number: 80  
 
 longhorn_secret:
   secret_name: basic-auth

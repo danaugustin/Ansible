@@ -6,14 +6,8 @@
       - vars/lab.yml    
   tasks:
 
-    - name: Create Metallb address pool
+    - name: Deploy Longhorn ingress
       include_role:
-        name: custom_resource
+        name: ingress
       vars:
-        resource: "{{ metallb_address }}"
-
-    - name: Create Metallb advertisement
-      include_role:
-        name: custom_resource
-      vars:
-        resource: "{{ metallb_advertise }}"
+        ingress: "{{ longhorn_ingress }}"
