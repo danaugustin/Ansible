@@ -176,15 +176,17 @@
       vars:
         resource: "{{ metallb_advertise }}"
 
-    - name: Download Metallb manifest
-      get_url:
-        url: "https://raw.githubusercontent.com/metallb/metallb/v0.14.9/config/manifests/metallb-native.yaml"
-        dest: /tmp/metallb.yml     
+    - name: Deploy Metallb
+      command: kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.14.9/config/manifests/metallb-native.yaml
 
-    - name: Apply Metallb manifest
-      command: kubectl apply -f /tmp/metallb.yml  
+    - name: Wait for Metallb to initialize [30s]
+      wait_for:
+        timeout: 30
 
-    - name: Apply Longhorn
+    - name: Deploy Nginx Ingress Controller
+      command: kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/cloud/deploy.yaml
+      
+    - name: Deploy Longhorn
       command: kubectl apply -f https://raw.githubusercontent.com/longhorn/longhorn/v1.8.0/deploy/longhorn.yaml
 
     - name: Deploy Longhorn ingress
