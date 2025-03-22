@@ -6,8 +6,8 @@
       - vars/lab.yml    
   tasks:
 
-    - name: Deploy Longhorn ingress
+    - name: Deploy Longhorn secret
       include_role:
-        name: ingress
+        name: longhorn_secret
       vars:
-        ingress: "{{ longhorn_ingress }}"
+        secret: "{{ longhorn_secret }}"

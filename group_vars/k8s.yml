@@ -9,12 +9,12 @@ k8s_packages:
   - kubelet
   - kubectl
   - containerd
-  - pip
 base_packages:
   - apt-transport-https
   - vim
   - netcat-traditional
   - nfs-common
+  - pip
 pip_packages:
   - kubernetes
 env_vars:

@@ -150,56 +150,14 @@
     - name: Reload bashrc
       shell: source ~/.bashrc
       args:
-        executable: /bin/bash
-   
-    - name: Download Flannel CNI plugin manifest
-      get_url:
-        url: "https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml"
-        dest: /tmp/kube-flannel.yml     
+        executable: /bin/bash  
 
-    - name: Apply Flannel CNI
-      command: kubectl apply -f /tmp/kube-flannel.yml         
+    - name: Deploy Flannel CNI
+      command: kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml        
 
     - name: Wait for Flannel to initialize [30s]
       wait_for:
         timeout: 30
-
-    - name: Create Metallb address pool
-      include_role:
-        name: custom_resource
-      vars:
-        resource: "{{ metallb_address }}"
-
-    - name: Create Metallb advertisement
-      include_role:
-        name: custom_resource
-      vars:
-        resource: "{{ metallb_advertise }}"
-
-    - name: Deploy Metallb
-      command: kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.14.9/config/manifests/metallb-native.yaml
-
-    - name: Wait for Metallb to initialize [30s]
-      wait_for:
-        timeout: 30
-
-    - name: Deploy Nginx Ingress Controller
-      command: kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/cloud/deploy.yaml
-      
-    - name: Deploy Longhorn
-      command: kubectl apply -f https://raw.githubusercontent.com/longhorn/longhorn/v1.8.0/deploy/longhorn.yaml
-
-    - name: Deploy Longhorn ingress
-      include_role:
-        name: ingress
-      vars:
-        ingress: "{{ longhorn_ingress }}"
-
-    - name: Deploy Longhorn secret
-      include_role:
-        name: secret
-      vars:
-        secret: "{{ longhorn_secret }}"
 
     - name: Extract join command for control plane
       shell: kubeadm token create imshmn.pmdyiq127q1uel2t --print-join-command
@@ -230,3 +188,52 @@
       shell: source ~/.bashrc
       args:
         executable: /bin/bash
+
+- name: Kubernetes Controlplane Setup
+  hosts: k8s_controlplane
+  environment: "{{ env_vars }}"  
+  become: true
+  vars_files:
+      - vars/lab.yml    
+          
+  tasks:
+    - name: Deploy Metallb
+      command: kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.14.9/config/manifests/metallb-native.yaml
+
+    - name: Wait for Metallb to initialize [120s]
+      wait_for:
+        timeout: 120
+
+    - name: Create Metallb address pool
+      include_role:
+        name: custom_resource
+      vars:
+        resource: "{{ metallb_address }}"
+
+    - name: Create Metallb advertisement
+      include_role:
+        name: custom_resource
+      vars:
+        resource: "{{ metallb_advertise }}"
+
+    - name: Deploy Nginx Ingress Controller
+      command: kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/cloud/deploy.yaml
+      
+    - name: Wait for Nginx to initialize [60s]
+      wait_for:
+        timeout: 60
+
+    - name: Deploy Longhorn
+      command: kubectl apply -f https://raw.githubusercontent.com/longhorn/longhorn/v1.8.0/deploy/longhorn.yaml
+
+    - name: Deploy Longhorn ingress
+      include_role:
+        name: ingress
+      vars:
+        ingress: "{{ longhorn_ingress }}"
+
+    - name: Deploy Longhorn secret
+      include_role:
+        name: longhorn_secret
+      vars:
+        secret: "{{ longhorn_secret }}"
